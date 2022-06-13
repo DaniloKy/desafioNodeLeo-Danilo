@@ -1,0 +1,16 @@
+{
+    "comands":[
+        {           
+            "comand": "/cName",  
+            "description": "Changes your user name."
+        },
+        {
+            "comand": "/cDesc",
+            "description":"Changes you description"
+        },
+        {
+            "comand": "/seeDesc @user",
+            "description":"See the other @users description"
+        }
+    ]
+}
