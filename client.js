@@ -1,4 +1,5 @@
 var net = require('net');
+var myCon = require('./console');
 var config = require('./config.json');
 var obj = require("./comandos.json");
 var listaComandos = obj.comands;
@@ -12,42 +13,28 @@ const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
+
 client.on('connect', () => {
-    console.log("Sou um cliente");
-});
-client.on('data', msg => {
-    console.log(msg.toString());
-});
-client.on('end', () => {
-    console.log("sair");
-    process.exit;
-});
-client.on('error', e => {
-    console.log(e.toString());
+    myCon.log("Conected!");
 });
 
-rl.on('line', (input)=>{
-    var input_ = input.toString().trim();
-    if(input_ === "/help")
-        help();
-    else
-        showArrEl(input_);
+client.on('data', msg => { //manda mensagem "/msgTo Danilo ola Danilo"
+    myCon.log(msg.toString());
 });
-function showArrEl(key){
-    console.log('ME: '+key)
-    client.write(`${key}`);
-}
-function help(){
-    console.log('List of comands: ');
-    listaComandos.forEach(element=>{
-        console.log(element.comand+": "+element.description);
-    });
-}
-/*
+
+client.on('end', () => {
+    myCon.log("sair");
+    process.exit;
+});
+
+client.on('error', e => {
+    myCon.log(e.toString());
+});
+
 rl.on('line',input => {
     showArrEl(input.toString().trim());
 });
+
 function showArrEl (key){
     client.write(`${key}`);
 }
-*/

@@ -1,70 +1,41 @@
 var net = require('net');
+var myCon = require('./console');
 var config = require('./config.json');
-var cons = []; // array de clientes conectados
-var broadcast = function(msg, origem){
-    cons.forEach(function(con){
-        if(con === origem)
-            return;
-        con.write(msg);
-    });
-}
+var comandos = require('./comandos.json');
+var Users = require('./functions').Users;
+
+var listaComandos = comandos.comands;
+var Clients = new Users();
 var server = net.createServer(function(con){
-    cons.push(con);
-    con.write("Servidor ativo.");
-    con.on('data', function(msg){
-        comands = {
-            cName(comando)
-            {
-                var nome = comando.slice(6).trim();
-                if(nome === null || nome === "")
-                    return;
-                var valida = cons.forEach(element => {
-                    if(nome === element.nome){
-                        console.log("Name already taken!");
-                        return false;
-                    }
-                });
-                if(valida != false){
-                    broadcast(con.nome+" changed his name to "+nome);
-                    con.nome = nome;
-                    return;
-                }
-            },
-            cDesc(comando)
-            {
-                var desc = comando.slice(6).trim();
-                broadcast(con.nome+" changed his description to "+desc);
-                con.desc = desc;
-                return;
-            },
-            seeDesc(comando)
-            {
-                var user = comando.slice(9).trim();
-                cons.forEach(function(con){
-                    if(con.nome == user){
-                        broadcast(user+"'s description is "+con.desc);
-                    }
-                });
-                return;
-            }
-        }
-        var comando = msg.toString().trim();
-        console.log(con.nome+" wrote "+comando);
-        if(comando[0] == "/")
+    Clients.attachUser(con);//adicionar um user ex: con=Leo
+    con.on('data', function(msg){// recebeu mensagem "/name Danilo"
+        var comando = msg.toString().trim();// mensagem toString e tira espaços inuteis
+        if(comando[0] === "/")//se tiver uma barra no inicio
         {
-            var cmd = comando.slice(1).trim();
-            var corte = cmd.length - cmd.indexOf(" ");
-            var func = cmd.slice(0, -corte);
-            comands[func](comando);
+            var cmdArray = comando.split(" ");//trasforma num array separado por espaços ex: "/msgTo Danilo" = "[msgTo] [Danilo] [Ola]"
+            var func = cmdArray[0].slice(1);//pega na primeira possição do array e retira a barra
+            listaComandos.forEach(function(e){//lista os comandos do json
+                var comand = e.comand.slice(1).split(' ');//pega no comando, tira a barra e tranforma num array ex:"/msg @user" = [msgTo] [@user]
+                var nome = comand[0];//pega na primeira possição [msgTo]
+                if(func == nome)//compara as duas [msgTo]=[msgTo]
+                {
+                    var msg = Clients[func](con, comando);//vai na classe Clients.msgTo(@me, comando)
+                    if(msg)//se houve retorno
+                        Clients.broadcast(msg);//
+                }
+            });
         }
         else
-            broadcast(con.nome+':'+msg,con);
+        {
+            myCon.log(con.nome+" wrote "+comando);
+            Clients.broadcast(con.nome+': '+msg,con);
+        }
     });
     con.on('end', function(){
-        broadcast(con.nome+' saiu ', con);
-        cons.splice(cons.indexOf(con), 1);
+        Clients.broadcast(con.nome+' saiu ', con);
+        Clients.detachUser(con);
     });
-    con.on('error', e => console.log(e.toString()));
+    con.on('error', e => myCon.log(e.toString()));
 });
 server.listen({
     port: config.port,
