@@ -1,34 +1,40 @@
-var myCon = require('./console');
 class Users
 {
-    cons = [];
-    listaComandos = require('./comandos.json').comands;
-    broadcast(msg, origem)//mensagem e de quem
+    cons = []; // Lista de usuários
+    userCounter = 1; // Contador de usuários para novos
+
+    // Mostra a mensagem a todos do chat
+    broadcast(args)
     {
         this.cons.forEach(function(con){
-            if(con === origem)
+            if(con === args.sender)
                 return;
-            con.write(msg);
+            con.write(args.message);
         });
     }
-    private(msg, orig, dest)
+
+    // Envia a mensagem privada
+    private(args)
     {
-        this.cons.forEach(con => {//listar os utilizadores no array de "cons"
-            if(con.nome == dest){//procura na lista o usuario que tem o mesmo nome que o destinatario ex:"Dan"
-                con.write(orig+" wrote just for you: "+msg);//manda a mensagem so para o destinatario
-            }
-        });
-    }
-    #systemAnswer(array)
-    {
-        var msg = array[0];
-        var dest = array[1];
         this.cons.forEach(con => {
-            if(con.nome == dest){
-                con.write(msg);
+            if(con.nome == args.recipient){
+                con.write(args.sender+" wrote just for you: "+args.message);
+                return;
             }
         });
     }
+
+    // Resposta do servidor para um usuário
+    systemAnswer(args)
+    {
+        this.cons.forEach(con => {
+            if(con.nome == args.recipient){
+                con.write(args.message);
+            }
+        });
+    }
+
+    // Verifica se o nome está em uso
     verNomeRep(nome)
     {
         var repete = false;
@@ -39,72 +45,57 @@ class Users
         });
         return repete;
     }
-    name(con, comando)
-    {
-        var nome = comando.slice(5).trim();
-        var rep = this.verNomeRep(nome);
-        if(rep === false) {
-            var msg = con.nome+" changed his name to "+nome;
-            con.nome = nome;
-            return msg;
-        }
-        else {
-            var sys = ["This name is in use", con.nome];
-            this.#systemAnswer(sys);
-        }
-        return;
-    }
-    desc(con, comando)
-    {
-        var desc = comando.slice(5).trim();
-        var msg = con.nome+" changed his description";
-        con.desc = desc;
-        return msg;
-    }
-    seeDesc(con, comando)
-    {
-        var user = comando.slice(8).trim();
-        var rem = con.nome;
-        var sys;
-        this.cons.forEach(function(con){
-            if(con.nome == user){
-                var desc = user+"`s description is "+con.desc;
-                sys = [desc, rem];
-            }
-        });
-        if(sys)
-            this.#systemAnswer(sys);
-        return;
-    }
-    msgTo(con, comando)
-    {
-        var comandoArray = comando.split(' ');//transforma num array ex: "/msgTo Dan Ola Danilo" = "[msgTo] [Dan] [Ola] [Danilo]"
-        var user = comandoArray[1];//pega na primeira possição ex: [Danilo]
-        comandoArray.splice(0, 2);//spice nas primeiras duas possições e deixa as mensagens
-        var message = comandoArray.join(' ');//tranforma o array numa numa string 
-        this.private(message, con.nome, user);//executa a função private(message ="Ola Danilo", con="Leo", user="Dan")
-        return;
-    }
-    help(con)
-    {
-        var cmd = "";
-        this.listaComandos.forEach(element => {
-            cmd += element.comand+": "+element.description+'\n';
-        });
-        console.log(cmd);
-        var array = [cmd, con.nome];
-        this.#systemAnswer(array);
-        return;
-    }
 
+    // Adiciona o user a lista
     attachUser(con)
     {
-        this.cons.push(con);//adicionar ao array um novo user
+        con.nome = "unknown"+this.userCounter++;
+        this.cons.push(con);
     }
+
+    // Retira o user da lista
     detachUser(con)
     {
-        this.cons.splice(cons.indexOf(con), 1);
+        this.cons.splice(this.cons.indexOf(con), 1);
+    }
+
+    // Prepara o comando separando em partes para o array
+    prepararComando(comando)
+    {
+        // Verifica se é um comando
+        if(comando[0] === '/'){
+
+            // Separa o comando em partes de um array
+            var cmd = comando.split(' ');
+
+            // Retira a ação e define os argumentos do comando
+            var args = cmd.splice(1);
+
+            // Define a ação do comando sem a /
+            var act = cmd[0].slice(1);
+
+            // Define um obj com um array com a ação e os argumentos
+            var answer = {
+                type: 'function',
+                args: {
+                    act: act,
+                    args: args
+                }
+            }
+        }
+        // Caso não for um comando
+        else{
+            // Define um obj com um array com a ação e os argumentos para caso não for um comando
+            var answer = {
+                type: 'message',
+                args: {
+                    message: comando
+                }
+            }
+        }
+
+        // Retorna a resposta da mensagem ou da funcionalidade
+        return answer;
     }
 }
-
-module.exports.Users = Users;
+module.exports= Users;
