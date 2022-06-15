@@ -31,7 +31,7 @@ client.on('data', msg => {
 
 // Quando a sessão é encerrada
 client.on('end', () => {
-    myCon.log('Left');
+    myCon.log('Disconnected');
     process.exit();
 });
 

@@ -97,5 +97,127 @@ class Users
         // Retorna a resposta da mensagem ou da funcionalidade
         return answer;
     }
+
+    // Funcionalidade para altrar o nome
+    name(con, args)
+    {
+        var nome = args[0];
+
+        // Verifica se o nome já está em uso
+        var rep = this.verNomeRep(nome);
+
+        // Caso não esteja em uso
+        if(rep === false) {
+
+            // prepara a mensagem para o chat e troca o nome
+            var msg = con.nome+" changed his name to "+nome;
+            con.nome = nome;
+            var send = {
+                sender: con,
+                message: msg
+            }
+            this.broadcast(send);
+
+            // e envia a mensagem para o servidor
+            return msg;
+        }
+        // Caso esteja em uso
+        else{
+            // Prepara e envia a mensagem direta para o usuário que tentou mudar de nome
+            var SysArray = {
+                message: 'This name is in use',
+                recipient: con.nome
+            }
+            this.systemAnswer(SysArray);
+        }
+
+        // Não retorna comentario para o servidor se o nome não for trocado
+        return;
+    }
+
+    // Funcionalidade para altrar a descrição
+    desc(con, args)
+    {
+        // Junta o array em uma string novamente
+        var desc = args.join(' ');
+
+        // Troca a descrição e mostra ao chat que trocou
+        var msg = con.nome+" changed his description";
+        con.desc = desc;
+        var send = {
+            sender: con,
+            message: msg
+        }
+        this.broadcast(send);
+
+        // Retorna a mensagem para o servidor
+        return msg;
+    }
+
+    // Funcionalidade para ver a descrição de um user
+    seeDesc(con, args)
+    {
+        // Define o destinatario
+        var user = args[0];
+        var reci = con.nome;
+
+        // Procura entre os usuários pela descrição
+        this.cons.forEach(function(con){
+            if(con.nome == user){
+
+                // Mostra a descrição do user
+                var desc = user+"`s description is "+con.desc;
+                var sysArray = {
+                    message: desc,
+                    recipient: reci
+                }
+                this.systemAnswer(sysArray);
+
+                // Retorna se achar
+                return;
+            }
+        });
+
+        // Prepara e envia a mensagem para o servidor
+        var msg = reci+" saw "+user+" descriptions";
+        return msg;
+    }
+
+    // Funcionalidade para enviar uma mensagem privada
+    msgTo(con, args)
+    {
+        // Separa a mensagem do user destinatário
+        var message = args.splice(1).join(' ');
+
+        // Define o user destinatário
+        var userReci = args[0];
+
+        // Prepara o objeto para o envio
+        var privateArray = {
+            message: message,
+            sender: con.nome,
+            recipient: userReci
+        }
+
+        // Envia o objeto com a mensagem o destino e o remetente
+        this.private(privateArray);
+
+        // Retorna com a mensagem para o servidor
+        var msg = con.nome+" sent a private message to "+userReci+" saying: "+message;
+        return msg;
+    }
+    online(con){
+        var online = "Users online: \n";
+        this.cons.forEach(element => {
+            online += element.nome+"\n";
+        });
+        var SysArray = {
+            message: online,
+            recipient: con.nome
+        }
+        this.systemAnswer(SysArray);
+
+        return con.nome+" saw the list of users online.";
+    }
 }
 module.exports= Users;

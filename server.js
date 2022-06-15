@@ -3,8 +3,6 @@ var net = require('net');
 var myCon = require('./anexo/console');
 const CONFIG = require('./anexo/config');
 var Users = require('./functions');
-var comandosR = require('./comandos');
-listaComandos = comandosR.comandos
 
 // Cria o objeto com as funcionalidades do usuário
 var Clients = new Users();
@@ -31,13 +29,12 @@ var server = net.createServer(function(con){
             var args = comando.args['args'];
 
             // Verifica se a funcionalidade existe
-            //if(typeof listaComandos[func].funcao === 'function')
+            if(typeof Clients[func] === 'function')
                 // Executa a funcionalidade
-                var msgServer = listaComandos[func].funcao(con, args);
-                //console.log(listaComandos.func.funcao);
-            //else
+                var msgServer = Clients[func](con, args);
+            else
                 // Caso a funcionalidade não exista
-                //Clients.systemAnswer("Command does not exists ", con.nome);
+                Clients.systemAnswer("Command does not exists ", con.nome);
 
             // Verifica se a funcionalidade responde com alguma mensagem para o servidor
             if(typeof msgServer === 'string')
@@ -47,10 +44,13 @@ var server = net.createServer(function(con){
         // Se não for uma funcionalidade é uma mensagem comum
         else if(comando.type === 'message')
         {
-            myCon.log(con.nome+" wrote "+comando.args.message);
+            var date = new Date;
+            var hours = date.getHours();
+            var min = date.getMinutes();
+            myCon.log(con.nome+" wrote "+comando.args.message+" at "+hours+":"+min);
             var send = {
                 sender: con,
-                message: con.nome+': '+comando.message
+                message: con.nome+" "+hours+":"+min+': '+comando.args.message
             }
             Clients.broadcast(send);
         }
