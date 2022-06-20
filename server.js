@@ -1,13 +1,12 @@
 // Require de todas as bibliotecas utilizadas
 var net = require('net');
-var myCon = require('./anexo/console');
 const CONFIG = require('./anexo/config');
-var Users = require('./Users');
+var Users = require('./User');
 
 // Cria o objeto com as funcionalidades do usuário
 var Clients = new Users();
-console.log('\x1b[36m%s\x1b[0m', 'I am cyan');
 
+// Cria a ligação com o servidor
 var server = net.createServer(function(con){
 
     // adiciona o usuário ao objeto
@@ -38,19 +37,16 @@ var server = net.createServer(function(con){
 
             // Verifica se a funcionalidade responde com alguma mensagem para o servidor
             if(typeof msgServer === 'string')
-                myCon.log(msgServer);
+                Clients.historic(msgServer);
 
         }
         // Se não for uma funcionalidade é uma mensagem comum
         else if(comando.type === 'message')
         {
-            var date = new Date;
-            var hours = date.getHours();
-            var min = date.getMinutes();
-            myCon.log(con.nome+" wrote "+comando.args.message+" at "+hours+":"+min);
+            Clients.historic(con.nome+" wrote "+comando.args.message);
             var send = {
                 sender: con,
-                message: con.nome+" "+hours+":"+min+': '+comando.args.message
+                message: con.nome+': '+comando.args.message
             }
             Clients.broadcast(send);
         }
@@ -63,14 +59,14 @@ var server = net.createServer(function(con){
             message: con.nome+" just left"
         }
         Clients.broadcast(send);
-        myCon.log(con.nome+" just left");
+        Clients.historic(con.nome+" just left");
 
         // Retirar user do objeto
         Clients.detachUser(con);
     });
 
     // Mensagens de erros
-    con.on('error', e => myCon.log(e.toString()));
+    con.on('error', e => Clients.historic(e.toString()));
 
 });
 
