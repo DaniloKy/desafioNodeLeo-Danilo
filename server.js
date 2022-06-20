@@ -2,12 +2,12 @@
 var net = require('net');
 var myCon = require('./anexo/console');
 const CONFIG = require('./anexo/config');
-var Users = require('./functions');
+var Users = require('./Users');
 
 // Cria o objeto com as funcionalidades do usuário
 var Clients = new Users();
+console.log('\x1b[36m%s\x1b[0m', 'I am cyan');
 
-// Cria a ligação com o servidor
 var server = net.createServer(function(con){
 
     // adiciona o usuário ao objeto
